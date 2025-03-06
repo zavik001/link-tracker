@@ -1,30 +1,32 @@
 package backend.academy.bot.service;
 
+import backend.academy.bot.command.Command;
 import com.pengrad.telegrambot.model.Update;
+import java.util.List;
+import lombok.Getter;
 import org.springframework.stereotype.Service;
 
+@Getter
 @Service
 public class BotService {
 
-    public String handleCommand(Update update) {
+    private final List<Command> commands;
+
+    public BotService(List<Command> commands) {
+        this.commands = commands;
+    }
+
+    public String handleUpdate(Update update) {
         if (update.message() == null || update.message().text() == null) {
-            return "Unknown command";
+            return "Message not recognized.";
         }
 
-        String command = update.message().text().split(" ")[0];
+        String commandText = update.message().text().split(" ")[0];
 
-        return switch (command) {
-            case "/start" -> handleStart();
-            case "/help" -> handleHelp();
-            default -> "Unknown command. Use /help to see available commands.";
-        };
-    }
-
-    private String handleStart() {
-        return "Hello! I'm your bot. Use /help to see the list of commands.";
-    }
-
-    private String handleHelp() {
-        return "Available commands:\n" + "/start - Start the bot\n" + "/help - Show help";
+        return commands.stream()
+                .filter(cmd -> cmd.command().equalsIgnoreCase(commandText))
+                .findFirst()
+                .map(cmd -> cmd.handle(update))
+                .orElse("Unknown command. Use /help for a list of commands.");
     }
 }
