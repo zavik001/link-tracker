@@ -59,9 +59,8 @@ public class TrackCommand implements Command {
 
             case WAITING_FILTERS:
                 state.filters = message.equals("-") ? List.of() : List.of(message.split(" "));
-                scrapperClient.addLink(chatId, new TrackLinkRequest(state.link, state.tags, state.filters));
                 userStates.remove(chatId);
-                return "✅ Successfully added to tracking: " + state.link;
+                return scrapperClient.addLink(chatId, new TrackLinkRequest(state.link, state.tags, state.filters));
         }
 
         return "❌ Error! Start over by sending /track";

@@ -24,13 +24,19 @@ public class LinkClient {
 
     public String addLink(Long chatId, TrackLinkRequest link) {
         try {
-            return restClient
+            LinkResponse response = restClient
                     .post()
                     .uri(API_URL)
                     .header("Tg-Chat-Id", chatId.toString())
                     .body(link)
                     .retrieve()
-                    .body(String.class);
+                    .body(LinkResponse.class);
+
+            if (response != null && response.url() != null) {
+                return "✅ Successfully  added to tracking: " + response.url();
+            }
+
+            return "❌ Error adding link to be tracked " + link.link();
         } catch (RestClientResponseException e) {
             log.error(
                     "❌ Error adding link {} for chat {}: {} - {}",
@@ -56,7 +62,7 @@ public class LinkClient {
                 return "✅ Successfully stopped tracking: " + response.url();
             }
 
-            return "❌ Link not found in chat";
+            return "❌ Link not found";
         } catch (RestClientResponseException e) {
             log.error(
                     "❌ Error removing link {} for chat {}: {} - {}",
@@ -79,6 +85,12 @@ public class LinkClient {
 
             return (response != null && response.links() != null) ? response.links() : List.of();
         } catch (RestClientResponseException e) {
+            log.error(
+                    "❌ Error getting links for chat {}: {} - {}",
+                    chatId,
+                    e.getStatusCode(),
+                    e.getResponseBodyAsString());
+            log.error("❌ Error - {}", errorHandler.extractErrorMessage(e));
             return List.of();
         }
     }

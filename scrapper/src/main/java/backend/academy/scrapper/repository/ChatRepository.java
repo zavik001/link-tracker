@@ -36,7 +36,7 @@ public class ChatRepository {
         return findById(chatId)
                 .map(chat -> chat.links().stream()
                         .map(link -> new LinkResponse(
-                                (long) link.hashCode(),
+                                chat.id(),
                                 link,
                                 chat.tags().getOrDefault(link, Collections.emptyList()),
                                 chat.filters().getOrDefault(link, Collections.emptyList())))

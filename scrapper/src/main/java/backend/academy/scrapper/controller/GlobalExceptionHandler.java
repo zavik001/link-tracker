@@ -1,6 +1,11 @@
-package backend.academy.scrapper.exception;
+package backend.academy.scrapper.controller;
 
 import backend.academy.scrapper.dto.ApiErrorResponse;
+import backend.academy.scrapper.exception.ChatAlreadyExistsException;
+import backend.academy.scrapper.exception.ChatNotFoundException;
+import backend.academy.scrapper.exception.ChatProcessingException;
+import backend.academy.scrapper.exception.LinkAlredyExistsException;
+import backend.academy.scrapper.exception.LinkNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Arrays;
 import java.util.List;
@@ -41,6 +46,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(LinkNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleLinkNotFoundException(LinkNotFoundException e) {
         return buildErrorResponse(e, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(LinkAlredyExistsException.class)
+    public ResponseEntity<ApiErrorResponse> handleLinkAlredyExistsException(LinkAlredyExistsException e) {
+        return buildErrorResponse(e, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(IllegalStateException.class)
