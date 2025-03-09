@@ -1,10 +1,11 @@
 package backend.academy.scrapper.service;
 
 import backend.academy.scrapper.entity.ChatEntity;
+import backend.academy.scrapper.exception.ChatAlreadyExistsException;
+import backend.academy.scrapper.exception.ChatNotFoundException;
+import backend.academy.scrapper.exception.ChatProcessingException;
 import backend.academy.scrapper.repository.ChatRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ChatService {
@@ -14,29 +15,25 @@ public class ChatService {
         this.chatRepository = chatRepository;
     }
 
-    public String registerChat(Long chatId, String username) {
+    public void registerChat(Long chatId) {
         if (chatRepository.exists(chatId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Chat is already registered.");
+            throw new ChatAlreadyExistsException("Chat is already registered.");
         }
-
         try {
-            chatRepository.save(new ChatEntity(chatId, username));
-            return "You have successfully registered!";
+            chatRepository.save(new ChatEntity(chatId));
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chat registration error.");
+            throw new ChatProcessingException("Chat registration error.");
         }
     }
 
-    public String deleteChat(Long chatId) {
+    public void deleteChat(Long chatId) {
         if (!chatRepository.exists(chatId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found.");
+            throw new ChatNotFoundException("Chat not found.");
         }
-
         try {
             chatRepository.delete(chatId);
-            return "You have successfully deleted your chat.";
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chat deletion error.");
+            throw new ChatProcessingException("Chat deletion error.");
         }
     }
 }

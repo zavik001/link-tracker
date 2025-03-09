@@ -25,3 +25,6 @@ hs_err_pid*
 
 ### Environment variables file
 .env
+
+.vscode/
+mvnw

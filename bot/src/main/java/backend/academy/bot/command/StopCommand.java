@@ -1,14 +1,14 @@
 package backend.academy.bot.command;
 
-import backend.academy.bot.client.ScrapperClient;
+import backend.academy.bot.client.ChatClient;
 import com.pengrad.telegrambot.model.Update;
 import org.springframework.stereotype.Component;
 
 @Component
 public class StopCommand implements Command {
-    private final ScrapperClient scrapperClient;
+    private final ChatClient scrapperClient;
 
-    public StopCommand(ScrapperClient scrapperClient) {
+    public StopCommand(ChatClient scrapperClient) {
         this.scrapperClient = scrapperClient;
     }
 
