@@ -1,6 +1,5 @@
 package backend.academy.bot;
 
-import backend.academy.bot.config.BotConfig;
 import backend.academy.bot.service.BotService;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
@@ -11,16 +10,18 @@ import com.pengrad.telegrambot.request.SetMyCommands;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import org.springframework.stereotype.Component;
 
+@Getter
 @Component
 public class Bot {
 
     private final TelegramBot bot;
     private final BotService botService;
 
-    public Bot(BotConfig botConfig, BotService botService) {
-        this.bot = new TelegramBot(botConfig.telegramToken());
+    public Bot(TelegramBot bot, BotService botService) {
+        this.bot = bot;
         this.botService = botService;
     }
 

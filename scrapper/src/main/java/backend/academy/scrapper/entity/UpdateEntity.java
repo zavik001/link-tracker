@@ -6,13 +6,11 @@ import lombok.Data;
 
 @Data
 public class UpdateEntity {
-    private final Long id;
     private final String url;
     private final List<Long> chatIds;
 
     public UpdateEntity(String url) {
         this.url = url;
-        this.id = (long) url.hashCode();
         this.chatIds = new ArrayList<>();
     }
 
@@ -20,5 +18,9 @@ public class UpdateEntity {
         if (!chatIds.contains(chatId)) {
             chatIds.add(chatId);
         }
+    }
+
+    public List<Long> getChatIds() {
+        return new ArrayList<>(chatIds);
     }
 }
