@@ -2,6 +2,8 @@ app:
   github-token: ${GITHUB_TOKEN} # env variable
   stackoverflow:
     key: ${SO_TOKEN_KEY}
+    client-id: ${SO_CLIENT_ID}
+    client-secret: ${SO_CLIENT_SECRET}
     access-token: ${SO_ACCESS_TOKEN}
 
 spring:
@@ -21,3 +23,6 @@ springdoc:
   swagger-ui:
     enabled: true
     path: /swagger-ui
+
+scheduler:
+  update-interval: 60000
