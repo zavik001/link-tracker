@@ -25,30 +25,30 @@
 
 Бот поддерживает следующие команды:
 
-- **`/help`** — список всех доступных команд.
-- **`/start`** — регистрация пользователя.
-- **`/stop`** — удаление всех данных о чате (ID чата, отслеживаемые ссылки и т. д.).
-- **`/track`** — добавление ссылки для отслеживания (валидируется через `LinkValidator`).
-- **`/untrack`** — удаление ссылки из списка отслеживаемых.
-- **`/list`** — получение списка всех отслеживаемых ссылок.
+- [**`/help`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/command/HelpCommand.java) — список всех доступных команд.
+- [**`/start`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/command/StartCommand.java) — регистрация пользователя.
+- [**`/stop`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/command/StopCommand.java) — удаление всех данных о чате (ID чата, отслеживаемые ссылки и т. д.).
+- [**`/track`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/command/TrackCommand.java) — добавление ссылки для отслеживания (валидируется через [`LinkValidator`](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/util/LinkValidator.java)).
+- [**`/untrack`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/command/UntrackCommand.java) — удаление ссылки из списка отслеживаемых.
+- [**`/list`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/command/ListCommand.java) — получение списка всех отслеживаемых ссылок.
 
 ### 🔄 Взаимодействие со Scrapper
 
 Бот общается со Scrapper API через:
-- **`ChatClient`** — регистрация и удаление чатов.
-- **`LinkClient`** — управление ссылками (добавление, удаление, получение списка).
+- [**`ChatClient`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/client/ChatClient.java) — регистрация и удаление чатов.
+- [**`LinkClient`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/client/LinkClient.java) — управление ссылками (добавление, удаление, получение списка).
 
-Scrapper API работает по OpenAPI-контракту. В случае ошибок логирование и обработку выполняет `ErrorHandler`.
+Scrapper API работает по OpenAPI-контракту. В случае ошибок логирование и обработку выполняет [`ErrorHandler`](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/client/ErrorHandler.java).
 
 ### 📩 Получение обновлений
 
-- Бот получает обновления о ссылках через `UpdateController`.
+- Бот получает обновления о ссылках через [`UpdateController`](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/controller/UpdateController.java).
 - Scrapper отправляет данные по OpenAPI-контракту.
-- Обновления рассылаются чатам через `UpdateService`.
+- Обновления рассылаются чатам через [`UpdateService`](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/service/UpdateService.java).
 
 ### 📜 Дополнительно
 
-- Бот поддерживает встроенное **меню команд** в Telegram.
+- Бот поддерживает встроенное [**меню команд**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/Bot.java) в Telegram.
 
 ---
 
@@ -57,23 +57,23 @@ Scrapper API работает по OpenAPI-контракту. В случае �
 ### 📌 Функционал
 
 Scrapper обрабатывает запросы от бота:
-- **Работа с чатами** через `ChatController` и `ChatService`.
-- **Работа с ссылками** через `LinkController` и `LinkService`.
+- **Работа с чатами** через [`ChatController`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/controller/ChatController.java) и [`ChatService`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/service/ChatService.java).
+- **Работа с ссылками** через [`LinkController`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/controller/LinkController.java) и [`LinkService`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/service/LinkService.java).
 
 Все контроллеры работают по OpenAPI-контракту.
 
 ### 🔄 Получение обновлений
 
-- **`UpdateScheduler`** вызывает `UpdateService.checkUpdates()`.
+- [**`UpdateScheduler`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/scheduler/UpdateScheduler.java) вызывает [`UpdateService.checkUpdates()`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/service/UpdateService.java).
 - **Источники данных:**
-  - GitHub — через `GitHubClient`
-  - Stack Overflow — через `StackOverflowClient`
+  - GitHub — через [`GitHubClient`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/client/GitHubClient.java)
+  - Stack Overflow — через [`StackOverflowClient`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/client/StackOverflowClient.java)
 
 ### 📦 Хранение данных
 
 Данные хранятся в двух репозиториях:
-- **`ChatRepository`** — содержит информацию о чатах, отслеживаемых ссылках, тегах и фильтрах.
-- **`UpdateRepository`** — Хранилище данных организовано так, что каждая отслеживаемая ссылка хранится единожды, а все подписчики (чаты) ассоциируются с ней. Это позволяет быстро находить все подписанные чаты и уведомлять их за один запрос
+- [**`ChatRepository`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/repository/ChatRepository.java) — содержит информацию о чатах, отслеживаемых ссылках, тегах и фильтрах.
+- [**`UpdateRepository`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/repository/UpdateRepository.java) — Хранилище данных организовано так, что каждая отслеживаемая ссылка хранится единожды, а все подписчики (чаты) ассоциируются с ней. Это позволяет быстро находить все подписанные чаты и уведомлять их за один запрос
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## 🚀 Запуск проекта
