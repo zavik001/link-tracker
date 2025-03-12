@@ -50,6 +50,8 @@ public class LinkService {
         ChatEntity chat =
                 chatRepository.findById(chatId).orElseThrow(() -> new ChatNotFoundException("Chat not found"));
 
+        updateRepository.removeLink(chatId, request.link());
+
         return chatRepository.removeLink(chat, request);
     }
 }

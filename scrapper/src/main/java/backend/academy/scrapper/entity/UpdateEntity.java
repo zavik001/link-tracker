@@ -23,4 +23,8 @@ public class UpdateEntity {
     public List<Long> getChatIds() {
         return new ArrayList<>(chatIds);
     }
+
+    public void removeChatId(Long chatId) {
+        chatIds.remove(chatId);
+    }
 }

@@ -17,15 +17,14 @@ public class UpdateService {
     }
 
     public void sendUpdateToChats(LinkUpdate update) {
-        if (update.tgChatIds().isEmpty()) {
+        if (update.chatIds().isEmpty()) {
             throw new ChatNotFoundException("Chat not found");
         }
 
-        String message = "🔔 *New update!*\n\n" + "📌 *link:* "
-                + update.url() + "\n" + "📝 *description:* "
-                + update.description();
+        String message =
+                "🔔 *New update!*\n\n" + "📌 *link:* " + update.url() + "\n" + "📝 *description:* " + update.update();
 
-        for (Long chatId : update.tgChatIds()) {
+        for (Long chatId : update.chatIds()) {
             bot.execute(new SendMessage(chatId, message));
         }
     }

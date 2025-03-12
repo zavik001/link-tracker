@@ -16,7 +16,7 @@ public class UpdateScheduler {
 
     @Scheduled(fixedRateString = "${scheduler.update-interval}")
     public void checkForUpdates() {
-        log.info("Checking for updates");
+        // log.info("Checking for updates");
         updateService.checkUpdates();
     }
 }

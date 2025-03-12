@@ -37,12 +37,16 @@ public class UpdateService {
 
     public void checkUpdates() {
         Map<String, Instant> lastUpdates = getLastUpdates();
-        log.info("Last updates: {}", lastUpdates.toString());
+        // log.info("Last updates: {}", lastUpdates.toString());
 
         lastUpdates.forEach((url, lastUpdated) -> {
             if (isRecentUpdate(lastUpdated)) {
                 List<Long> chatIds = updateRepository.getChatIdsByUrl(url);
                 if (!chatIds.isEmpty()) {
+                    // log.info("Sending update for {} to {}", url, chatIds);
+                    // UpdateResponse updateResponse = new UpdateResponse((long) url.hashCode(), url, "Updated",
+                    // chatIds);
+                    // log.info("Sending update: {}", updateResponse.toString());
                     updateClient.sendUpdate(new UpdateResponse((long) url.hashCode(), url, "Updated", chatIds));
                 }
             }
@@ -62,6 +66,6 @@ public class UpdateService {
         if (lastUpdated.equals(Instant.EPOCH)) {
             return false;
         }
-        return lastUpdated.isAfter(Instant.now().minusMillis(updateInterval));
+        return lastUpdated.isAfter(Instant.now().minusMillis(updateInterval /* + 100000000 */));
     }
 }

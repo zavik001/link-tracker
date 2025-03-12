@@ -19,7 +19,7 @@ public class UpdateClient {
 
     public void sendUpdate(UpdateResponse updateResponse) {
         try {
-            restClient.post().uri(API_URL).body(updateResponse).retrieve().toBodilessEntity();
+            restClient.post().uri(API_URL).body(updateResponse).retrieve().body(UpdateResponse.class);
         } catch (RestClientResponseException e) {
             log.error("❌ Error sending update: {}", errorHandler.extractErrorMessage(e));
         }

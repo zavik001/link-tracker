@@ -24,6 +24,10 @@ public class ChatRepository {
         return Optional.ofNullable(chats.get(chatId));
     }
 
+    public ChatEntity getChat(Long chatId) {
+        return chats.get(chatId);
+    }
+
     public void delete(Long chatId) {
         chats.remove(chatId);
     }

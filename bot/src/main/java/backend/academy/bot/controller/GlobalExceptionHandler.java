@@ -4,6 +4,7 @@ import backend.academy.bot.dto.ApiErrorResponse;
 import backend.academy.bot.exception.ChatNotFoundException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -20,7 +21,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        return buildErrorResponse(e, HttpStatus.BAD_REQUEST);
+        String errorMessage = e.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+        return buildErrorResponse(new Exception(errorMessage), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
