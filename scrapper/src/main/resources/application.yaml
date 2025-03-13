@@ -6,6 +6,9 @@ app:
     client-secret: ${SO_CLIENT_SECRET}
     access-token: ${SO_ACCESS_TOKEN}
 
+api:
+  bot-api-url: http://localhost:8080
+
 spring:
   application:
     name: Scrapper

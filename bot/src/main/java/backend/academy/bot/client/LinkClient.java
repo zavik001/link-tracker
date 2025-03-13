@@ -1,5 +1,6 @@
 package backend.academy.bot.client;
 
+import backend.academy.bot.config.AppProperties;
 import backend.academy.bot.dto.LinkResponse;
 import backend.academy.bot.dto.ListLinksResponse;
 import backend.academy.bot.dto.TrackLinkRequest;
@@ -16,24 +17,25 @@ import org.springframework.web.client.RestClientResponseException;
 public class LinkClient {
     private final RestClient restClient = RestClient.create();
     private final ErrorHandler errorHandler;
-    private static final String API_URL = "http://localhost:8081/links";
+    private final String apiUrl;
 
-    public LinkClient(ErrorHandler errorHandler) {
+    public LinkClient(AppProperties appProperties, ErrorHandler errorHandler) {
         this.errorHandler = errorHandler;
+        this.apiUrl = appProperties.scrapperApiUrl() + "/links";
     }
 
     public String addLink(Long chatId, TrackLinkRequest link) {
         try {
             LinkResponse response = restClient
                     .post()
-                    .uri(API_URL)
+                    .uri(apiUrl)
                     .header("Tg-Chat-Id", chatId.toString())
                     .body(link)
                     .retrieve()
                     .body(LinkResponse.class);
 
             if (response != null && response.url() != null) {
-                return "✅ Successfully  added to tracking: " + response.url();
+                return "✅ Successfully added to tracking: " + response.url();
             }
 
             return "❌ Error adding link to be tracked " + link.link();
@@ -52,7 +54,7 @@ public class LinkClient {
         try {
             LinkResponse response = restClient
                     .method(HttpMethod.DELETE)
-                    .uri(API_URL)
+                    .uri(apiUrl)
                     .header("Tg-Chat-Id", chatId.toString())
                     .body(link)
                     .retrieve()
@@ -78,7 +80,7 @@ public class LinkClient {
         try {
             ListLinksResponse response = restClient
                     .get()
-                    .uri(API_URL)
+                    .uri(apiUrl)
                     .header("Tg-Chat-Id", chatId.toString())
                     .retrieve()
                     .body(ListLinksResponse.class);
