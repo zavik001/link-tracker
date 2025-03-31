@@ -11,19 +11,16 @@ import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+@RequiredArgsConstructor
 @Getter
 @Component
 public class Bot {
 
     private final TelegramBot bot;
     private final BotService botService;
-
-    public Bot(TelegramBot bot, BotService botService) {
-        this.bot = bot;
-        this.botService = botService;
-    }
 
     @PostConstruct
     public void start() {

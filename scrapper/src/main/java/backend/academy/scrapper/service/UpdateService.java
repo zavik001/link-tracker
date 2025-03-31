@@ -4,19 +4,21 @@ import backend.academy.scrapper.client.GitHubClient;
 import backend.academy.scrapper.client.StackOverflowClient;
 import backend.academy.scrapper.client.UpdateClient;
 import backend.academy.scrapper.dto.UpdateResponse;
-import backend.academy.scrapper.repository.UpdateRepository;
+import backend.academy.scrapper.repository.DbRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+@RequiredArgsConstructor
 @Slf4j
 @Service
 public class UpdateService {
-    private final UpdateRepository updateRepository;
+    private final DbRepository dbRepository;
     private final GitHubClient gitHubClient;
     private final StackOverflowClient stackOverflowClient;
     private final UpdateClient updateClient;
@@ -24,24 +26,14 @@ public class UpdateService {
     @Value("${scheduler.update-interval}")
     private long updateInterval;
 
-    public UpdateService(
-            UpdateRepository updateRepository,
-            GitHubClient gitHubClient,
-            StackOverflowClient stackOverflowClient,
-            UpdateClient updateClient) {
-        this.updateRepository = updateRepository;
-        this.gitHubClient = gitHubClient;
-        this.stackOverflowClient = stackOverflowClient;
-        this.updateClient = updateClient;
-    }
-
     public void checkUpdates() {
         Map<String, Instant> lastUpdates = getLastUpdates();
         // log.info("Last updates: {}", lastUpdates.toString());
 
         lastUpdates.forEach((url, lastUpdated) -> {
             if (isRecentUpdate(lastUpdated)) {
-                List<Long> chatIds = updateRepository.getChatIdsByUrl(url);
+                List<Long> chatIds = dbRepository.getChatIdsByUrl(url);
+                // log.info("Chat ids: {}", chatIds);
                 if (!chatIds.isEmpty()) {
                     // log.info("Sending update for {} to {}", url, chatIds);
                     // UpdateResponse updateResponse = new UpdateResponse((long) url.hashCode(), url, "Updated",
@@ -54,7 +46,7 @@ public class UpdateService {
     }
 
     private Map<String, Instant> getLastUpdates() {
-        return updateRepository.getAllLinks().stream()
+        return dbRepository.getAllLinks().stream()
                 .collect(Collectors.toMap(
                         url -> url,
                         url -> url.contains("github.com")
@@ -66,6 +58,7 @@ public class UpdateService {
         if (lastUpdated.equals(Instant.EPOCH)) {
             return false;
         }
-        return lastUpdated.isAfter(Instant.now().minusMillis(updateInterval /* + 100000000 */));
+        // log.info("Last updated: {}", lastUpdated);
+        return lastUpdated.isAfter(Instant.now().minusSeconds(updateInterval + 10000000));
     }
 }

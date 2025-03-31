@@ -2,7 +2,7 @@ app:
   telegram-token: ${TELEGRAM_TOKEN} # env variable
 
 api:
-  scrapper-api-url: http://localhost:8081
+  scrapper-api-url: ${SCRAPPER_API_URL}
 
 spring:
   application:

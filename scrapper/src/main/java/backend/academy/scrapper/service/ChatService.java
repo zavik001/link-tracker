@@ -1,44 +1,32 @@
 package backend.academy.scrapper.service;
 
-import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.exception.ChatAlreadyExistsException;
 import backend.academy.scrapper.exception.ChatNotFoundException;
-import backend.academy.scrapper.exception.ChatProcessingException;
-import backend.academy.scrapper.repository.ChatRepository;
-import backend.academy.scrapper.repository.UpdateRepository;
+import backend.academy.scrapper.repository.DbRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@RequiredArgsConstructor
+@Slf4j
 @Service
 public class ChatService {
-    private final ChatRepository chatRepository;
-    private final UpdateRepository updateRepository;
+    private final DbRepository dbRepository;
 
-    public ChatService(ChatRepository chatRepository, UpdateRepository updateRepository) {
-        this.chatRepository = chatRepository;
-        this.updateRepository = updateRepository;
-    }
-
+    @Transactional
     public void registerChat(Long chatId) {
-        if (chatRepository.exists(chatId)) {
+        if (dbRepository.existById(chatId)) {
             throw new ChatAlreadyExistsException("Chat is already registered.");
         }
-        try {
-            chatRepository.save(new ChatEntity(chatId));
-        } catch (Exception e) {
-            throw new ChatProcessingException("Chat registration error.");
-        }
+        dbRepository.saveById(chatId);
     }
 
+    @Transactional
     public void deleteChat(Long chatId) {
-        if (!chatRepository.exists(chatId)) {
+        if (!dbRepository.existById(chatId)) {
             throw new ChatNotFoundException("Chat not found.");
         }
-        try {
-            ChatEntity chat = chatRepository.getChat(chatId);
-            chatRepository.delete(chatId);
-            updateRepository.removeChatId(chatId, chat.links());
-        } catch (Exception e) {
-            throw new ChatProcessingException("Chat deletion error.");
-        }
+        dbRepository.deleteById(chatId);
     }
 }
