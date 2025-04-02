@@ -10,7 +10,7 @@ api:
   bot-api-url: ${BOT_API_URL}
 
 database: 
-  access-type: SQL
+  access-type: ORM
 
 spring:
   application:
@@ -37,4 +37,6 @@ springdoc:
     path: /swagger-ui
 
 scheduler:
-  update-interval: 60000
+  update-interval: 180000
+  batch-size: 8
+  thread-count: 4

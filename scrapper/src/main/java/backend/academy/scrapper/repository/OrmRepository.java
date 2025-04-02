@@ -12,6 +12,8 @@ import backend.academy.scrapper.entity.ChatLinkTagId;
 import backend.academy.scrapper.entity.FilterEntity;
 import backend.academy.scrapper.entity.LinkEntity;
 import backend.academy.scrapper.entity.TagEntity;
+import backend.academy.scrapper.exception.FilterNotFoundException;
+import backend.academy.scrapper.exception.TagNotFoundException;
 import backend.academy.scrapper.repository.jpa.ChatLinkFilterRepository;
 import backend.academy.scrapper.repository.jpa.ChatLinkRepository;
 import backend.academy.scrapper.repository.jpa.ChatLinkTagRepository;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -123,56 +126,36 @@ public class OrmRepository implements DbRepository {
         }
     }
 
-    @Override
     @Transactional
     public LinkResponse deleteByLink(Long chatId, String link) {
         ChatEntity chat = chatRepository.findById(chatId).orElseThrow();
         LinkEntity linkEntity = linkRepository.findByUrl(link).orElseThrow();
-        ChatLinkEntity chatLink = chatLinkRepository
-                .findById(new ChatLinkId(chat.id(), linkEntity.id()))
-                .orElseThrow();
 
-        List<ChatLinkTagEntity> chatLinkTags = chatLinkTagRepository.findAllByChatAndLink(chat, linkEntity);
-        List<ChatLinkFilterEntity> chatLinkFilters = chatLinkFilterRepository.findAllByChatAndLink(chat, linkEntity);
+        List<String> tags = chatLinkTagRepository.findAllByChatAndLink(chat, linkEntity).stream()
+                .map(ChatLinkTagEntity::tag)
+                .map(TagEntity::name)
+                .collect(Collectors.toList());
 
-        chatLinkTagRepository.deleteAll(chatLinkTags);
-        chatLinkFilterRepository.deleteAll(chatLinkFilters);
-        chatLinkRepository.delete(chatLink);
+        List<String> filters = chatLinkFilterRepository.findAllByChatAndLink(chat, linkEntity).stream()
+                .map(ChatLinkFilterEntity::filter)
+                .map(FilterEntity::value)
+                .collect(Collectors.toList());
 
-        for (ChatLinkTagEntity chatLinkTag : chatLinkTags) {
-            TagEntity tag = chatLinkTag.tag();
-            if (!chatLinkTagRepository.existsByTag(tag)) {
-                tagRepository.delete(tag);
-            }
-        }
+        chatLinkTagRepository.deleteByChatIdAndLinkId(chat.id(), linkEntity.id());
+        chatLinkFilterRepository.deleteByChatIdAndLinkId(chat.id(), linkEntity.id());
 
-        for (ChatLinkFilterEntity chatLinkFilter : chatLinkFilters) {
-            FilterEntity filter = chatLinkFilter.filter();
-            if (!chatLinkFilterRepository.existsByFilter(filter)) {
-                filterRepository.delete(filter);
-            }
-        }
+        chatLinkRepository.deleteByChatIdAndLinkId(chatId, linkEntity.id());
 
-        if (chatLinkRepository.findAllByLink(linkEntity).isEmpty()) {
-            linkRepository.delete(linkEntity);
-        }
+        cleanupDatabase();
 
-        return new LinkResponse(
-                linkEntity.id(),
-                linkEntity.url(),
-                chatLinkTags.stream()
-                        .map(ChatLinkTagEntity::tag)
-                        .map(TagEntity::name)
-                        .collect(Collectors.toList()),
-                chatLinkFilters.stream()
-                        .map(ChatLinkFilterEntity::filter)
-                        .map(FilterEntity::value)
-                        .collect(Collectors.toList()));
+        return new LinkResponse(linkEntity.id(), linkEntity.url(), tags, filters);
     }
 
     @Override
-    public List<String> getAllLinks() {
-        return linkRepository.findAll().stream().map(LinkEntity::url).collect(Collectors.toList());
+    public List<String> getLinksBatch(int offset, int batchSize) {
+        return linkRepository.findAll(PageRequest.of(offset / batchSize, batchSize)).stream()
+                .map(LinkEntity::url)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -182,9 +165,18 @@ public class OrmRepository implements DbRepository {
 
     @Override
     public List<String> getTagsByChatId(Long chatId) {
-        ChatEntity chat = chatRepository.findById(chatId).orElseThrow();
+        ChatEntity chat = chatRepository.findById(chatId).orElseThrow(() -> new TagNotFoundException("Tag not found"));
         return chatLinkTagRepository.findAllByChat(chat).stream()
                 .map(clt -> clt.tag().name())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getFiltersByChatId(Long chatId) {
+        ChatEntity chat =
+                chatRepository.findById(chatId).orElseThrow(() -> new FilterNotFoundException("Filter not found"));
+        return chatLinkFilterRepository.findAllByChat(chat).stream()
+                .map(clf -> clf.filter().value())
                 .collect(Collectors.toList());
     }
 
@@ -195,5 +187,12 @@ public class OrmRepository implements DbRepository {
         return chatLinkTagRepository.findAllByChatAndTag(chat, tagEntity).stream()
                 .map(clt -> clt.link().url())
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void cleanupDatabase() {
+        linkRepository.cleanupUnusedLinks();
+        tagRepository.cleanupUnusedTags();
+        filterRepository.cleanupUnusedFilters();
     }
 }

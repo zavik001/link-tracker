@@ -21,11 +21,13 @@ public interface DbRepository {
 
     LinkResponse deleteByLink(Long chatId, String link);
 
-    List<String> getAllLinks();
+    List<String> getLinksBatch(int offset, int batchSize);
 
     List<Long> getChatIdsByUrl(String url);
 
     List<String> getTagsByChatId(Long chatId);
 
     List<String> getLinksByTag(String tag, Long chatId);
+
+    List<String> getFiltersByChatId(Long chatId);
 }

@@ -12,9 +12,9 @@ import org.springframework.stereotype.Component;
 public class UpdateScheduler {
     private final UpdateService updateService;
 
-    @Scheduled(fixedRateString = "${scheduler.update-interval}")
+    @Scheduled(fixedDelayString = "${scheduler.update-interval}")
     public void checkForUpdates() {
-        // log.info("Checking for updates");
+        log.info("Starting scheduled update check");
         updateService.checkUpdates();
     }
 }
