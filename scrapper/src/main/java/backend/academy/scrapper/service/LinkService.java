@@ -4,54 +4,48 @@ import backend.academy.scrapper.dto.AddLinkRequest;
 import backend.academy.scrapper.dto.LinkResponse;
 import backend.academy.scrapper.dto.ListLinksResponse;
 import backend.academy.scrapper.dto.RemoveLinkRequest;
-import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.exception.ChatNotFoundException;
 import backend.academy.scrapper.exception.LinkAlredyExistsException;
-import backend.academy.scrapper.repository.ChatRepository;
-import backend.academy.scrapper.repository.UpdateRepository;
+import backend.academy.scrapper.repository.DbRepository;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@RequiredArgsConstructor
+@Slf4j
 @Service
 public class LinkService {
-    private final ChatRepository chatRepository;
-    private final UpdateRepository updateRepository;
-
-    public LinkService(ChatRepository chatRepository, UpdateRepository updateRepository) {
-        this.chatRepository = chatRepository;
-        this.updateRepository = updateRepository;
-    }
+    private final DbRepository dbRepository;
 
     public ListLinksResponse getAllLinks(Long chatId) {
-        if (!chatRepository.exists(chatId)) {
+        if (!dbRepository.existById(chatId)) {
             throw new ChatNotFoundException("Chat not found");
         }
 
-        List<LinkResponse> links = chatRepository.getAllLinks(chatId);
+        List<LinkResponse> links = dbRepository.getAllLinksById(chatId);
         return new ListLinksResponse(links, links.size());
     }
 
     public LinkResponse addLink(Long chatId, AddLinkRequest request) {
-        ChatEntity chat =
-                chatRepository.findById(chatId).orElseThrow(() -> new ChatNotFoundException("Chat not found"));
+        if (!dbRepository.existById(chatId)) {
+            throw new ChatNotFoundException("Chat not found");
+        }
 
-        if (chat.links().contains(request.link())) {
+        if (dbRepository.existByLink(chatId, request.link())) {
             throw new LinkAlredyExistsException("Link already tracked");
         }
 
-        chatRepository.addLink(chatId, request);
-
-        updateRepository.addLink(chatId, request.link());
+        dbRepository.saveByLink(chatId, request);
 
         return new LinkResponse(chatId, request.link(), request.tags(), request.filters());
     }
 
     public LinkResponse removeLink(Long chatId, RemoveLinkRequest request) {
-        ChatEntity chat =
-                chatRepository.findById(chatId).orElseThrow(() -> new ChatNotFoundException("Chat not found"));
+        if (!dbRepository.existById(chatId)) {
+            throw new ChatNotFoundException("Chat not found");
+        }
 
-        updateRepository.removeLink(chatId, request.link());
-
-        return chatRepository.removeLink(chat, request);
+        return dbRepository.deleteByLink(chatId, request.link());
     }
 }

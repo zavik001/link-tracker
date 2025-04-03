@@ -2,16 +2,14 @@ package backend.academy.bot.command;
 
 import backend.academy.bot.client.ChatClient;
 import com.pengrad.telegrambot.model.Update;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+@RequiredArgsConstructor
 @Component
 public class StartCommand implements Command {
 
     private final ChatClient scrapperClient;
-
-    public StartCommand(ChatClient scrapperClient) {
-        this.scrapperClient = scrapperClient;
-    }
 
     @Override
     public String command() {

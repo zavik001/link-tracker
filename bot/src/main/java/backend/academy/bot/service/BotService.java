@@ -7,18 +7,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+@RequiredArgsConstructor
 @Service
 @Getter
 public class BotService {
 
     private final List<Command> commands;
     private final Map<Long, Command> activeStates = new HashMap<>();
-
-    public BotService(List<Command> commands) {
-        this.commands = commands;
-    }
 
     public String handleUpdate(Update update) {
         if (update.message() == null || update.message().text() == null) {

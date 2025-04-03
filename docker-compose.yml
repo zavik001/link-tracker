@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  migrate:
+    image: liquibase/liquibase
+    depends_on:
+      - postgres
+    entrypoint:
+      - liquibase
+      - "--changeLogFile=../migrations/master.xml"
+      - "--url=${DB_URL}"
+      - "--username=${DB_USER}"
+      - "--password=${DB_PASSWORD}"
+      - "update"
+    volumes:
+      - ./migrations:/migrations
+
+  scrapper:
+    build: ./scrapper
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      SO_ACCESS_TOKEN: ${SO_ACCESS_TOKEN}
+      SO_CLIENT_SECRET: ${SO_CLIENT_SECRET}
+      SO_CLIENT_ID: ${SO_CLIENT_ID}
+      SO_TOKEN_KEY: ${SO_TOKEN_KEY}
+      DB_URL: ${DB_URL}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      BOT_API_URL: ${BOT_API_URL}
+    ports:
+      - "8081:8081"
+
+  bot:
+    build: ./bot
+    restart: always
+    depends_on:
+      - scrapper
+    environment:
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
+      SCRAPPER_API_URL: ${SCRAPPER_API_URL}
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:

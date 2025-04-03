@@ -1,6 +1,9 @@
 app:
   telegram-token: ${TELEGRAM_TOKEN} # env variable
 
+api:
+  scrapper-api-url: ${SCRAPPER_API_URL}
+
 spring:
   application:
     name: Bot

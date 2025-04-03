@@ -4,15 +4,13 @@ import backend.academy.bot.client.LinkClient;
 import backend.academy.bot.dto.LinkResponse;
 import com.pengrad.telegrambot.model.Update;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+@RequiredArgsConstructor
 @Component
 public class ListCommand implements Command {
     private final LinkClient scrapperClient;
-
-    public ListCommand(LinkClient scrapperClient) {
-        this.scrapperClient = scrapperClient;
-    }
 
     @Override
     public String command() {

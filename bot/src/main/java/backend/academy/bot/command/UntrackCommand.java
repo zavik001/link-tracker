@@ -4,15 +4,13 @@ import backend.academy.bot.client.LinkClient;
 import backend.academy.bot.dto.UntrackLinkRequest;
 import backend.academy.bot.util.LinkValidator;
 import com.pengrad.telegrambot.model.Update;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+@RequiredArgsConstructor
 @Component
 public class UntrackCommand implements Command {
     private final LinkClient scrapperClient;
-
-    public UntrackCommand(LinkClient scrapperClient) {
-        this.scrapperClient = scrapperClient;
-    }
 
     @Override
     public String command() {

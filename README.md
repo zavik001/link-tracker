@@ -31,14 +31,16 @@
 - [**`/track`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/command/TrackCommand.java) — добавление ссылки для отслеживания (валидируется через [`LinkValidator`](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/util/LinkValidator.java)).
 - [**`/untrack`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/command/UntrackCommand.java) — удаление ссылки из списка отслеживаемых.
 - [**`/list`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/command/ListCommand.java) — получение списка всех отслеживаемых ссылок.
+- [**`/tag`**](https://github.com/central-university-dev/java-zavik001/blob/homework2/bot/src/main/java/backend/academy/bot/command/TagCommand.java) — для просмотра всех тегов (/tag) и ссылок под конкретным тегом (/tag < tag >)
 
 ### 🔄 Взаимодействие со Scrapper
 
 Бот общается со Scrapper API через:
 - [**`ChatClient`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/client/ChatClient.java) — регистрация и удаление чатов.
 - [**`LinkClient`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/client/LinkClient.java) — управление ссылками (добавление, удаление, получение списка).
+- [**`TagClient`**](https://github.com/central-university-dev/java-zavik001/blob/homework2/bot/src/main/java/backend/academy/bot/client/TagClient.java) — для получения списка тегов и ссылок по тегу.
 
-Scrapper API работает по OpenAPI-контракту. В случае ошибок логирование и обработку выполняет [`ErrorHandler`](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/client/ErrorHandler.java).
+Scrapper API работает по OpenAPI-контракту. В случае ошибок ошибки логируются, корректную обработку ошибок и пересылку сообщений в чат выполняет [`ErrorHandler`](https://github.com/central-university-dev/java-zavik001/blob/homework1/bot/src/main/java/backend/academy/bot/client/ErrorHandler.java).
 
 ### 📩 Получение обновлений
 
@@ -59,21 +61,60 @@ Scrapper API работает по OpenAPI-контракту. В случае �
 Scrapper обрабатывает запросы от бота:
 - **Работа с чатами** через [`ChatController`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/controller/ChatController.java) и [`ChatService`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/service/ChatService.java).
 - **Работа с ссылками** через [`LinkController`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/controller/LinkController.java) и [`LinkService`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/service/LinkService.java).
+- **Работа с тегами** через [`TagController`](https://github.com/central-university-dev/java-zavik001/blob/homework2/scrapper/src/main/java/backend/academy/scrapper/controller/TagController.java) и [`TagService`](https://github.com/central-university-dev/java-zavik001/blob/homework2/scrapper/src/main/java/backend/academy/scrapper/service/TagService.java).
 
 Все контроллеры работают по OpenAPI-контракту.
 
 ### 🔄 Получение обновлений
 
-- [**`UpdateScheduler`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/scheduler/UpdateScheduler.java) вызывает [`UpdateService.checkUpdates()`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/service/UpdateService.java).
-- **Источники данных:**
+- [**`UpdateScheduler`**](https://github.com/central-university-dev/java-zavik001/blob/homework2/scrapper/src/main/java/backend/academy/scrapper/scheduler/UpdateScheduler.java) периодически вызывает метод [`UpdateService.checkUpdates()`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/service/UpdateService.java).
+- **📡 Источники данных:**
   - GitHub — через [`GitHubClient`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/client/GitHubClient.java)
   - Stack Overflow — через [`StackOverflowClient`](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/client/StackOverflowClient.java)
+- **⚙️ Обработка полученных данных**
+  1. Запрос обновлений
+     - Для каждого URL запрашивается обновление через API
+  2. Фильтрация обновлений
+     - Определяются подписанные пользователи (чаты), которые отслеживают данный URL.
+     - Для каждого пользователя применяется его список фильтров (ключевые слова).
+  3. Парсинг ответа
+     - Полученный JSON-ответ анализируется, извлекаются значения, соответствующие фильтрам.
+  4. Проверка актуальности
+     - Обновление считается релевантным, если оно произошло после последнего запуска шедулера.
+  5. Формирование уведомлений
+     - Отобранные обновления, соответствующие фильтрам, отправляются пользователям.
+- **⚙️ Обработка батчей и многопоточность**
+  - Ссылки на обновления запрашиваются партиями (batch) заданного размера. Каждый батч делится между потоками. Количество потоков настраивается через конфигурацию.
 
-### 📦 Хранение данных
+## 📦 Хранение данных
 
-Данные хранятся в двух репозиториях:
-- [**`ChatRepository`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/repository/ChatRepository.java) — содержит информацию о чатах, отслеживаемых ссылках, тегах и фильтрах.
-- [**`UpdateRepository`**](https://github.com/central-university-dev/java-zavik001/blob/homework1/scrapper/src/main/java/backend/academy/scrapper/repository/UpdateRepository.java) — Хранилище данных организовано так, что каждая отслеживаемая ссылка хранится единожды, а все подписчики (чаты) ассоциируются с ней. Это позволяет быстро находить все подписанные чаты и уведомлять их за один запрос
+Для хранения данных используются **четыре основные таблицы** и **три вспомогательные таблицы** для связи.
+
+### 📌 Основные таблицы
+
+- `chats` — таблица чатов.
+- `links` — таблица ссылок.
+- `tags` — таблица тегов.
+- `filters` — таблица фильтров.
+
+### 🔗 Связующие таблицы
+
+Связи между чатами, ссылками, тегами и фильтрами реализованы через **промежуточные таблицы**:
+
+- `chat_links` — связь между чатами и ссылками.
+- `chat_link_tags` — связь между ссылками и тегами в контексте чата.
+- `chat_link_filters` — связь между ссылками и фильтрами в контексте чата.
+
+💡 **Один чат может отслеживать несколько ссылок, а одна ссылка может быть отслеживаемой несколькими чатами.**  
+📌 **Каждая ссылка может иметь несколько тегов и фильтров в рамках одного чата.**
+
+### 🛠 Способы работы с базой данных:
+
+- **SQL** (`JdbcTemplate`, `SqlRepository`).
+- **ORM** (`Hibernate`, `OrmRepository`).  
+  Оба репозитория (`SqlRepository` и `OrmRepository`) наследуются от `DbRepository` и работают одинаково.  
+  Выбор зависит от **настроек** (`database.access-type`).
+
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## 🚀 Запуск проекта
@@ -92,18 +133,27 @@ git clone git@github.com:central-university-dev/java-zavik001.git
 
 ### ▶️ Запуск
 
-#### 1️⃣ Запуск бота
+#### 1️⃣ Запуск базы
 
 ```bash
-cd bot/
-mvn spring-boot:run
+docker-compose up -d postgres
 ```
 
-#### 2️⃣ Запуск Scrapper
+#### 2️⃣ Запуск миграции
 
 ```bash
-cd scrapper/
-mvn spring-boot:run
+docker-compose up -d migrate
 ```
 
-💡 **Примечание:** Рекомендуется запускать бота и Scrapper API в двух отдельных терминалах, чтобы удобно отслеживать их логи и управлять процессами. Можно запустить оба сервиса в одном терминале (например, через tmux или screen), но это менее удобно. Возможно, есть и другие варианты, но два терминала — наиболее комфортный способ работы.
+#### 3️⃣ Запуск скраппер
+
+```bash
+docker-compose up -d scrapper
+```
+
+#### 4️⃣ Запуск  бота
+
+```bash
+docker-compose up -d bot
+```
+

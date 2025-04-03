@@ -6,6 +6,12 @@ app:
     client-secret: ${SO_CLIENT_SECRET}
     access-token: ${SO_ACCESS_TOKEN}
 
+api:
+  bot-api-url: ${BOT_API_URL}
+
+database: 
+  access-type: SQL
+
 spring:
   application:
     name: Scrapper
@@ -15,6 +21,12 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
 
 server:
   port: 8081
@@ -26,3 +38,5 @@ springdoc:
 
 scheduler:
   update-interval: 60000
+  batch-size: 8
+  thread-count: 4

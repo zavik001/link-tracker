@@ -7,16 +7,14 @@ import com.pengrad.telegrambot.model.Update;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+@RequiredArgsConstructor
 @Component
 public class TrackCommand implements Command {
     private final LinkClient scrapperClient;
     private static final Map<Long, TrackState> userStates = new HashMap<>();
-
-    public TrackCommand(LinkClient scrapperClient) {
-        this.scrapperClient = scrapperClient;
-    }
 
     @Override
     public String command() {

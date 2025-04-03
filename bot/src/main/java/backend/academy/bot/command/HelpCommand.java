@@ -1,16 +1,15 @@
 package backend.academy.bot.command;
 
+import com.pengrad.telegrambot.model.Update;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+@RequiredArgsConstructor
 @Component
 public class HelpCommand implements Command {
 
     private final List<Command> commands;
-
-    public HelpCommand(List<Command> commands) {
-        this.commands = commands;
-    }
 
     @Override
     public String command() {
@@ -23,7 +22,7 @@ public class HelpCommand implements Command {
     }
 
     @Override
-    public String handle(com.pengrad.telegrambot.model.Update update) {
+    public String handle(Update update) {
         StringBuilder helpText = new StringBuilder("Available commands:\n");
         for (Command cmd : commands) {
             helpText.append(cmd.command())

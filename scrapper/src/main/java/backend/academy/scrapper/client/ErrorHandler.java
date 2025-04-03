@@ -2,19 +2,17 @@ package backend.academy.scrapper.client;
 
 import backend.academy.scrapper.dto.ApiErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 
+@RequiredArgsConstructor
 @Slf4j
 @Component
 public class ErrorHandler {
 
     private final ObjectMapper objectMapper;
-
-    public ErrorHandler(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
 
     public String extractErrorMessage(RestClientResponseException e) {
         try {

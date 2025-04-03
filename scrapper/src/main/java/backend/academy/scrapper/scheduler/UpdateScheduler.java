@@ -1,22 +1,20 @@
 package backend.academy.scrapper.scheduler;
 
 import backend.academy.scrapper.service.UpdateService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+@RequiredArgsConstructor
 @Slf4j
 @Component
 public class UpdateScheduler {
     private final UpdateService updateService;
 
-    public UpdateScheduler(UpdateService updateService) {
-        this.updateService = updateService;
-    }
-
-    @Scheduled(fixedRateString = "${scheduler.update-interval}")
+    @Scheduled(fixedDelayString = "${scheduler.update-interval}")
     public void checkForUpdates() {
-        // log.info("Checking for updates");
+        log.info("Starting scheduled update check");
         updateService.checkUpdates();
     }
 }
