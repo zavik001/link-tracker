@@ -195,4 +195,13 @@ public class OrmRepository implements DbRepository {
         tagRepository.cleanupUnusedTags();
         filterRepository.cleanupUnusedFilters();
     }
+
+    @Override
+    public List<String> getFiltersByChatIdAndLink(Long chatId, String link) {
+        ChatEntity chat = chatRepository.findById(chatId).orElseThrow();
+        LinkEntity linkEntity = linkRepository.findByUrl(link).orElseThrow();
+        return chatLinkFilterRepository.findAllByChatAndLink(chat, linkEntity).stream()
+                .map(clf -> clf.filter().value())
+                .collect(Collectors.toList());
+    }
 }

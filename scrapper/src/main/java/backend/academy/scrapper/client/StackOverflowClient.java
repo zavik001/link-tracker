@@ -1,14 +1,13 @@
 package backend.academy.scrapper.client;
 
 import backend.academy.scrapper.config.ScrapperConfig;
-import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
@@ -34,10 +33,10 @@ public class StackOverflowClient {
                 .build();
     }
 
-    public Instant getLastUpdated(String url) {
+    public Map<String, Object> getLastUpdated(String url) {
         String apiUrl = convertToApiUrl(url);
         if (apiUrl == null) {
-            return Instant.EPOCH;
+            return Map.of();
         }
 
         try {
@@ -45,31 +44,20 @@ public class StackOverflowClient {
                     restClient.get().uri(apiUrl).retrieve().body(new ParameterizedTypeReference<>() {});
 
             if (response == null || !response.containsKey("items")) {
-                return Instant.EPOCH;
+                log.warn("⚠️ Empty or invalid response from Stack Overflow API for {}", apiUrl);
+                return Map.of();
             }
 
-            // log.info("Response from Stack Overflow : {}", response);
+            // log.info("📩 Response from Stack Overflow API: {}", response);
+            return response;
 
-            Object itemsObj = response.get("items");
-
-            if (!(itemsObj instanceof List<?> items)
-                    || items.isEmpty()
-                    || !(items.get(0) instanceof Map<?, ?> firstItem)) {
-                return Instant.EPOCH;
-            }
-
-            Object lastActivityDateObj = firstItem.get("last_activity_date");
-
-            if (!(lastActivityDateObj instanceof Number)) {
-                return Instant.EPOCH;
-            }
-
-            return Instant.ofEpochSecond(((Number) lastActivityDateObj).longValue());
         } catch (RestClientResponseException e) {
-            // log.error("❌ Stack Overflow API error: {}", e.getResponseBodyAsString());
             log.error("❌ Stack Overflow API error: Status {} - {}", e.getStatusCode(), e.getStatusText());
-            return Instant.EPOCH;
+        } catch (ResourceAccessException e) {
+            log.error("❌ Stack Overflow API connection error: {}", e.getMessage());
         }
+
+        return Map.of();
     }
 
     private String convertToApiUrl(String url) {

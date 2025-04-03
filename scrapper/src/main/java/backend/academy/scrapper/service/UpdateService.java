@@ -5,9 +5,14 @@ import backend.academy.scrapper.client.StackOverflowClient;
 import backend.academy.scrapper.client.UpdateClient;
 import backend.academy.scrapper.dto.UpdateResponse;
 import backend.academy.scrapper.repository.DbRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -28,6 +33,9 @@ public class UpdateService {
     private final StackOverflowClient stackOverflowClient;
     private final UpdateClient updateClient;
     private ExecutorService executorService;
+    private ObjectMapper objectMapper;
+    private static final int MAX_LENGTH = 200;
+    private static final int MAX_TITLE_LENGTH = 50;
 
     @Value("${scheduler.batch-size}")
     private int batchSize;
@@ -35,9 +43,13 @@ public class UpdateService {
     @Value("${scheduler.thread-count}")
     private int threadCount;
 
+    @Value("${scheduler.update-interval}")
+    private int updateInterval;
+
     @PostConstruct
     public void init() {
         this.executorService = Executors.newFixedThreadPool(threadCount);
+        this.objectMapper = new ObjectMapper();
     }
 
     @PreDestroy
@@ -48,7 +60,7 @@ public class UpdateService {
     }
 
     public void checkUpdates() {
-        for (int offset = 0, batchSize = this.batchSize; ; offset += batchSize) {
+        for (int offset = 0; ; offset += batchSize) {
             List<String> linksBatch = dbRepository.getLinksBatch(offset, batchSize);
             if (linksBatch.isEmpty()) break;
 
@@ -83,18 +95,30 @@ public class UpdateService {
     private void processBatch(List<String> links) {
         log.info("Thread {} processing {} links", Thread.currentThread().getName(), links.size());
 
-        Map<String, Instant> lastUpdates = getLastUpdates(links);
-        lastUpdates.forEach((url, lastUpdated) -> {
-            if (isRecentUpdate(lastUpdated)) {
-                List<Long> chatIds = dbRepository.getChatIdsByUrl(url);
-                if (!chatIds.isEmpty()) {
-                    updateClient.sendUpdate(new UpdateResponse((long) url.hashCode(), url, "Updated", chatIds));
+        Map<String, Object> updates = getUpdates(links);
+        updates.forEach((url, updateData) -> {
+            List<Long> chatIds = dbRepository.getChatIdsByUrl(url);
+            if (chatIds.isEmpty()) return;
+
+            for (Long chatId : chatIds) {
+                List<String> filters = dbRepository.getFiltersByChatIdAndLink(chatId, url);
+                log.info(
+                        "Processing {} for chatId {} with filters {} in Thread {}",
+                        url,
+                        chatId,
+                        filters,
+                        Thread.currentThread().getName());
+                String latestUpdate = extractRelevantUpdate(updateData, filters);
+
+                if (latestUpdate != null) {
+                    updateClient.sendUpdate(
+                            new UpdateResponse((long) url.hashCode(), url, latestUpdate, List.of(chatId)));
                 }
             }
         });
     }
 
-    private Map<String, Instant> getLastUpdates(List<String> links) {
+    private Map<String, Object> getUpdates(List<String> links) {
         return links.stream()
                 .collect(Collectors.toMap(
                         url -> url,
@@ -103,8 +127,97 @@ public class UpdateService {
                                 : stackOverflowClient.getLastUpdated(url)));
     }
 
+    public String extractRelevantUpdate(Object updateData, List<String> filters) {
+        if (updateData == null) {
+            return null;
+        }
+
+        JsonNode json = parseJson(updateData);
+        if (json == null) {
+            // log.warn("Failed to parse JSON: {}", updateData);
+            return null;
+        }
+
+        Instant lastUpdated = extractLastUpdated(json);
+        if (lastUpdated != null && !isRecentUpdate(lastUpdated)) {
+            return null;
+        }
+
+        String result = filters.stream()
+                .map(filter -> {
+                    List<String> values = findAllKeysInJson(json, filter);
+                    String truncatedValues = values.stream()
+                            .map(value -> value.length() > MAX_TITLE_LENGTH
+                                    ? value.substring(0, MAX_TITLE_LENGTH) + "..."
+                                    : value)
+                            .collect(Collectors.joining(", "));
+                    return values.isEmpty() ? null : filter + ": " + truncatedValues;
+                })
+                .filter(s -> s != null)
+                .collect(Collectors.joining("; "));
+
+        return result.length() > MAX_LENGTH ? result.substring(0, MAX_LENGTH) + "..." : result;
+    }
+
+    private JsonNode parseJson(Object updateData) {
+        try {
+            if (updateData instanceof String jsonString) {
+                return objectMapper.readTree(jsonString);
+            } else if (updateData instanceof Map) {
+                return objectMapper.valueToTree(updateData);
+            }
+            log.warn("Unexpected updateData type: {}", updateData.getClass());
+            return null;
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to parse JSON: {}", updateData);
+            return null;
+        }
+    }
+
+    private Instant extractLastUpdated(JsonNode json) {
+        if (json.has("last_activity_date")) {
+            return Instant.ofEpochSecond(json.get("last_activity_date").asLong());
+        }
+        if (json.has("creation_date")) {
+            return Instant.ofEpochSecond(json.get("creation_date").asLong());
+        }
+
+        List<String> dateFields = List.of("pushed_at", "updated_at", "created_at");
+        for (String field : dateFields) {
+            if (json.has(field)) {
+                try {
+                    return Instant.parse(json.get(field).asText());
+                } catch (DateTimeParseException e) {
+                    log.warn("Invalid date format in {}: {}", field, json.get(field));
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private List<String> findAllKeysInJson(JsonNode json, String key) {
+        List<String> results = new ArrayList<>();
+        collectKeys(json, key, results);
+        return results;
+    }
+
+    private void collectKeys(JsonNode json, String key, List<String> results) {
+        if (json.isObject()) {
+            json.fields().forEachRemaining(entry -> {
+                if (entry.getKey().equals(key)) {
+                    results.add(entry.getValue().asText());
+                }
+                collectKeys(entry.getValue(), key, results);
+            });
+        } else if (json.isArray()) {
+            for (JsonNode node : json) {
+                collectKeys(node, key, results);
+            }
+        }
+    }
+
     private boolean isRecentUpdate(Instant lastUpdated) {
-        return !lastUpdated.equals(Instant.EPOCH)
-                && lastUpdated.isAfter(Instant.now().minusSeconds(86400));
+        return lastUpdated.isAfter(Instant.now().minusSeconds(updateInterval + 1000000));
     }
 }

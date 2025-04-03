@@ -1,7 +1,6 @@
 package backend.academy.scrapper.client;
 
 import backend.academy.scrapper.config.ScrapperConfig;
-import java.time.Instant;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,12 +28,12 @@ public class GitHubClient {
                 .build();
     }
 
-    public Instant getLastUpdated(String githubUrl) {
+    public Map<String, Object> getLastUpdated(String githubUrl) {
         Matcher matcher = GITHUB_PATTERN.matcher(githubUrl);
 
         if (!matcher.matches()) {
             log.warn("⚠️ URL is not a GitHub link: {}", githubUrl);
-            return Instant.EPOCH;
+            return Map.of();
         }
 
         String owner = matcher.group("owner");
@@ -46,33 +45,23 @@ public class GitHubClient {
                 ? String.format("https://api.github.com/repos/%s/%s", owner, repo)
                 : String.format("https://api.github.com/repos/%s/%s/issues/%s", owner, repo, number);
 
-        // log.info("🔍 Sending request to GitHub API: {}", apiUrl);
-
         try {
             Map<String, Object> response =
                     restClient.get().uri(apiUrl).retrieve().body(new ParameterizedTypeReference<>() {});
 
-            if (response == null) {
+            if (response == null || response.isEmpty()) {
                 log.warn("⚠️ Empty response from GitHub API for {}", apiUrl);
-                return Instant.EPOCH;
+                return Map.of();
             }
 
             // log.info("📩 Response from GitHub API: {}", response);
-
-            String timestampKey = (type == null) ? "pushed_at" : "updated_at";
-            Object timestampValue = response.get(timestampKey);
-
-            if (timestampValue instanceof String timestamp) {
-                return Instant.parse(timestamp);
-            }
-
-            return Instant.EPOCH;
+            return response;
 
         } catch (RestClientResponseException e) {
             // log.error("❌ GitHub API error: Status {} - {}\nResponse Body: {}",
-            //         e.getStatusCode(), e.getStatusText(), e.getResponseBodyAsString());
+            // e.getStatusCode(), e.getStatusText(), e.getResponseBodyAsString());
             log.error("❌ GitHub API error: Status {} - {}", e.getStatusCode(), e.getStatusText());
-            return Instant.EPOCH;
+            return Map.of();
         }
     }
 }

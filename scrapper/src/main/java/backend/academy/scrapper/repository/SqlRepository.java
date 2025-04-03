@@ -243,4 +243,18 @@ public class SqlRepository implements DbRepository {
             rs.getString("url"),
             List.of((String[]) rs.getArray("tags").getArray()),
             List.of((String[]) rs.getArray("filters").getArray()));
+
+    @Override
+    public List<String> getFiltersByChatIdAndLink(Long chatId, String link) {
+        String sqlGetLinkId = "SELECT id FROM links WHERE url = ?";
+        Long linkId = jdbcTemplate.queryForObject(sqlGetLinkId, Long.class, link);
+        String sql =
+                """
+                SELECT f.value FROM filters f
+                JOIN chat_link_filters clf ON f.id = clf.filter_id
+                WHERE clf.chat_id = ? AND clf.link_id = ?
+                """;
+
+        return jdbcTemplate.queryForList(sql, String.class, chatId, linkId);
+    }
 }

@@ -30,4 +30,6 @@ public interface DbRepository {
     List<String> getLinksByTag(String tag, Long chatId);
 
     List<String> getFiltersByChatId(Long chatId);
+
+    List<String> getFiltersByChatIdAndLink(Long chatId, String link);
 }

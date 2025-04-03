@@ -24,6 +24,8 @@ public class UpdateClient {
             restClient.post().uri(apiUrl).body(updateResponse).retrieve().body(UpdateResponse.class);
         } catch (RestClientResponseException e) {
             log.error("❌ Error sending update: {}", errorHandler.extractErrorMessage(e));
+        } catch (Exception e) {
+            log.error("❌ Error sending update: {}", e.getMessage());
         }
     }
 }
