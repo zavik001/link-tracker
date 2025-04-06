@@ -10,7 +10,15 @@ api:
   bot-api-url: ${BOT_API_URL}
 
 database: 
-  access-type: SQL
+  access-type: ORM # или SQL
+
+transport:
+  type: kafka # или http
+
+kafka:
+  topics:
+    updates: updates-topic
+    dlq: updates-dlq
 
 spring:
   application:
@@ -27,6 +35,14 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    listener:
+      missing-topics-fatal: false
 
 server:
   port: 8081

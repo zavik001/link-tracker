@@ -2,7 +2,7 @@ package backend.academy.scrapper.service;
 
 import backend.academy.scrapper.client.GitHubClient;
 import backend.academy.scrapper.client.StackOverflowClient;
-import backend.academy.scrapper.client.UpdateClient;
+import backend.academy.scrapper.client.update.client.UpdateClient;
 import backend.academy.scrapper.dto.UpdateResponse;
 import backend.academy.scrapper.repository.DbRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;

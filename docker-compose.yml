@@ -27,11 +27,30 @@ services:
     volumes:
       - ./migrations:/migrations
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+
   scrapper:
     build: ./scrapper
     restart: always
     depends_on:
       - postgres
+      - kafka
     environment:
       GITHUB_TOKEN: ${GITHUB_TOKEN}
       SO_ACCESS_TOKEN: ${SO_ACCESS_TOKEN}
@@ -42,6 +61,7 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       BOT_API_URL: ${BOT_API_URL}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "8081:8081"
 
@@ -53,6 +73,7 @@ services:
     environment:
       TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
       SCRAPPER_API_URL: ${SCRAPPER_API_URL}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "8080:8080"
 
