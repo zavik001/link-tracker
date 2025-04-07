@@ -4,6 +4,7 @@ import backend.academy.bot.client.LinkClient;
 import backend.academy.bot.dto.TrackLinkRequest;
 import backend.academy.bot.util.LinkValidator;
 import com.pengrad.telegrambot.model.Update;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +57,16 @@ public class TrackCommand implements Command {
                 return "🔍 Specify filters (separated by spaces, optional). If not needed, send -";
 
             case WAITING_FILTERS:
-                state.filters = message.equals("-") ? List.of() : List.of(message.split(" "));
+                state.filters = message.equals("-") ? new ArrayList<>() : new ArrayList<>(List.of(message.split(" ")));
+                state.step = TrackStep.WAITING_ANTIFILTERS;
+                return "🚫 Specify *anti-filters* (usernames, space-separated, optional). If not needed, send -";
+
+            case WAITING_ANTIFILTERS:
+                if (!message.equals("-")) {
+                    for (String username : message.split(" ")) {
+                        state.filters.add("user=" + username);
+                    }
+                }
                 userStates.remove(chatId);
                 return scrapperClient.addLink(chatId, new TrackLinkRequest(state.link, state.tags, state.filters));
         }
@@ -82,6 +92,7 @@ public class TrackCommand implements Command {
     private enum TrackStep {
         WAITING_URL,
         WAITING_TAGS,
-        WAITING_FILTERS
+        WAITING_FILTERS,
+        WAITING_ANTIFILTERS
     }
 }
