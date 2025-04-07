@@ -44,6 +44,13 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
+  redis:
+    image: redis:7.2-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
 
   scrapper:
     build: ./scrapper
@@ -74,8 +81,11 @@ services:
       TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
       SCRAPPER_API_URL: ${SCRAPPER_API_URL}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - "8080:8080"
 
 volumes:
   postgres_data:
+  redis_data:

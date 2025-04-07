@@ -2,6 +2,8 @@ package backend.academy.bot.command;
 
 import backend.academy.bot.client.LinkClient;
 import backend.academy.bot.dto.TrackLinkRequest;
+import backend.academy.bot.service.ListStringCacheService;
+import backend.academy.bot.service.UpdateCacheServis;
 import backend.academy.bot.util.LinkValidator;
 import com.pengrad.telegrambot.model.Update;
 import java.util.ArrayList;
@@ -16,6 +18,8 @@ import org.springframework.stereotype.Component;
 public class TrackCommand implements Command {
     private final LinkClient scrapperClient;
     private static final Map<Long, TrackState> userStates = new HashMap<>();
+    private final ListStringCacheService listStringCacheService;
+    private final UpdateCacheServis updateCacheServis;
 
     @Override
     public String command() {
@@ -68,6 +72,16 @@ public class TrackCommand implements Command {
                     }
                 }
                 userStates.remove(chatId);
+
+                updateCacheServis.deleteLinks(chatId);
+                List<String> tags = listStringCacheService.getTags(chatId);
+                listStringCacheService.deleteTags(chatId);
+                if (tags != null) {
+                    for (String tag : tags) {
+                        listStringCacheService.deleteTagLinks(chatId, tag);
+                    }
+                }
+
                 return scrapperClient.addLink(chatId, new TrackLinkRequest(state.link, state.tags, state.filters));
         }
 

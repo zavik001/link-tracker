@@ -2,6 +2,7 @@ package backend.academy.bot.command;
 
 import backend.academy.bot.client.LinkClient;
 import backend.academy.bot.dto.LinkResponse;
+import backend.academy.bot.service.UpdateCacheServis;
 import com.pengrad.telegrambot.model.Update;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ListCommand implements Command {
     private final LinkClient scrapperClient;
+    private final UpdateCacheServis updateCacheServis;
 
     @Override
     public String command() {
@@ -25,7 +27,13 @@ public class ListCommand implements Command {
     @Override
     public String handle(Update update) {
         long chatId = update.message().chat().id();
-        List<LinkResponse> links = scrapperClient.getLinks(chatId);
+
+        List<LinkResponse> links = updateCacheServis.getLinks(chatId);
+
+        if (links == null) {
+            links = scrapperClient.getLinks(chatId);
+            updateCacheServis.setLinks(chatId, links);
+        }
 
         if (links.isEmpty()) {
             return "📭 No links are currently being tracked.";

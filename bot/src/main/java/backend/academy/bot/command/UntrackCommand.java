@@ -2,8 +2,11 @@ package backend.academy.bot.command;
 
 import backend.academy.bot.client.LinkClient;
 import backend.academy.bot.dto.UntrackLinkRequest;
+import backend.academy.bot.service.ListStringCacheService;
+import backend.academy.bot.service.UpdateCacheServis;
 import backend.academy.bot.util.LinkValidator;
 import com.pengrad.telegrambot.model.Update;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +14,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class UntrackCommand implements Command {
     private final LinkClient scrapperClient;
+    private final UpdateCacheServis updateCacheServis;
+    private final ListStringCacheService listStringCacheService;
 
     @Override
     public String command() {
@@ -38,6 +43,15 @@ public class UntrackCommand implements Command {
         }
 
         long chatId = update.message().chat().id();
+
+        updateCacheServis.deleteLinks(chatId);
+        List<String> tags = listStringCacheService.getTags(chatId);
+        listStringCacheService.deleteTags(chatId);
+        if (tags != null) {
+            for (String tag : tags) {
+                listStringCacheService.deleteTagLinks(chatId, tag);
+            }
+        }
 
         return scrapperClient.removeLink(chatId, new UntrackLinkRequest(url));
     }

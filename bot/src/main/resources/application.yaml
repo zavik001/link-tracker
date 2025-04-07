@@ -26,6 +26,10 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       listener:
         missing-topics-fatal: false
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
 server:
   port: 8080
