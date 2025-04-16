@@ -166,13 +166,38 @@ docker-compose up -d migrate
 docker-compose up -d redis
 ```
 
-#### 4️⃣ Запуск скраппер
+#### 4️⃣ Запуск zookeeper
+
+```bash
+docker-compose up -d zookeeper
+```
+
+#### 5️⃣ Запуск kafka
+
+```bash
+docker-compose up -d kafka
+
+docker exec -it java-zavik001-kafka-1 bash
+
+$> kafka-topics --create \
+  --bootstrap-server localhost:9092 \
+  --replication-factor 1 \
+  --partitions 1 \
+  --topic updates-dlq
+$> kafka-topics --create \
+  --bootstrap-server localhost:9092 \
+  --replication-factor 1 \
+  --partitions 1 \
+  --topic updates
+```
+
+#### 6️⃣ Запуск скраппер
 
 ```bash
 docker-compose up -d scrapper
 ```
 
-#### 5️⃣ Запуск  бота
+#### 7️⃣ Запуск  бота
 
 ```bash
 docker-compose up -d bot
