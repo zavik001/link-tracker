@@ -4,6 +4,11 @@ app:
 api:
   scrapper-api-url: ${SCRAPPER_API_URL}
 
+kafka:
+  topics:
+    updates: updates-topic
+    dlq: updates-dlq
+
 spring:
   application:
     name: Bot
@@ -13,6 +18,18 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      group-id: bot-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      listener:
+        missing-topics-fatal: false
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
 server:
   port: 8080

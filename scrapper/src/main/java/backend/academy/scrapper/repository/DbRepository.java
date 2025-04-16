@@ -3,9 +3,7 @@ package backend.academy.scrapper.repository;
 import backend.academy.scrapper.dto.AddLinkRequest;
 import backend.academy.scrapper.dto.LinkResponse;
 import java.util.List;
-import org.springframework.stereotype.Repository;
 
-@Repository
 public interface DbRepository {
     boolean existById(Long chatId);
 

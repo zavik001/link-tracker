@@ -127,6 +127,7 @@ public class OrmRepository implements DbRepository {
     }
 
     @Transactional
+    @Override
     public LinkResponse deleteByLink(Long chatId, String link) {
         ChatEntity chat = chatRepository.findById(chatId).orElseThrow();
         LinkEntity linkEntity = linkRepository.findByUrl(link).orElseThrow();

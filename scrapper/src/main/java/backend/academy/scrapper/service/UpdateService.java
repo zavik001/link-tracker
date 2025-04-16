@@ -2,7 +2,7 @@ package backend.academy.scrapper.service;
 
 import backend.academy.scrapper.client.GitHubClient;
 import backend.academy.scrapper.client.StackOverflowClient;
-import backend.academy.scrapper.client.UpdateClient;
+import backend.academy.scrapper.client.update.client.UpdateClient;
 import backend.academy.scrapper.dto.UpdateResponse;
 import backend.academy.scrapper.repository.DbRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -15,6 +15,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -97,6 +98,10 @@ public class UpdateService {
 
         Map<String, Object> updates = getUpdates(links);
         updates.forEach((url, updateData) -> {
+            JsonNode json = parseJson(updateData);
+            if (json == null) {
+                return;
+            }
             List<Long> chatIds = dbRepository.getChatIdsByUrl(url);
             if (chatIds.isEmpty()) return;
 
@@ -108,8 +113,8 @@ public class UpdateService {
                         chatId,
                         filters,
                         Thread.currentThread().getName());
-                String latestUpdate = extractRelevantUpdate(updateData, filters);
 
+                String latestUpdate = extractRelevantUpdate(json, filters);
                 if (latestUpdate != null) {
                     updateClient.sendUpdate(
                             new UpdateResponse((long) url.hashCode(), url, latestUpdate, List.of(chatId)));
@@ -127,23 +132,24 @@ public class UpdateService {
                                 : stackOverflowClient.getLastUpdated(url)));
     }
 
-    public String extractRelevantUpdate(Object updateData, List<String> filters) {
-        if (updateData == null) {
-            return null;
-        }
-
-        JsonNode json = parseJson(updateData);
-        if (json == null) {
-            // log.warn("Failed to parse JSON: {}", updateData);
-            return null;
-        }
-
+    public String extractRelevantUpdate(JsonNode json, List<String> filters) {
         Instant lastUpdated = extractLastUpdated(json);
         if (lastUpdated != null && !isRecentUpdate(lastUpdated)) {
             return null;
         }
 
+        for (String filter : filters) {
+            if (filter.startsWith("user=")) {
+                String blockedUser = filter.substring("user=".length());
+                if (matchesAntiUserFilter(json, blockedUser)) {
+                    log.info("Blocked update from user={} by anti-filter", blockedUser);
+                    return null;
+                }
+            }
+        }
+
         String result = filters.stream()
+                .filter(filter -> !filter.startsWith("user="))
                 .map(filter -> {
                     List<String> values = findAllKeysInJson(json, filter);
                     String truncatedValues = values.stream()
@@ -153,10 +159,24 @@ public class UpdateService {
                             .collect(Collectors.joining(", "));
                     return values.isEmpty() ? null : filter + ": " + truncatedValues;
                 })
-                .filter(s -> s != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.joining("; "));
 
         return result.length() > MAX_LENGTH ? result.substring(0, MAX_LENGTH) + "..." : result;
+    }
+
+    private boolean matchesAntiUserFilter(JsonNode json, String blockedUser) {
+        List<String> userKeys = List.of("author", "login", "user", "account_name", "owner");
+
+        for (String key : userKeys) {
+            List<String> values = findAllKeysInJson(json, key);
+            for (String value : values) {
+                if (value.equalsIgnoreCase(blockedUser)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private JsonNode parseJson(Object updateData) {
